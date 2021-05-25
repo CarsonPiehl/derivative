@@ -4,32 +4,54 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import functionPlot from 'function-plot';
-
+import {derivative} from 'mathjs';
+import { getParseTreeNode } from 'typescript';
 
 
 let options = {
   target: '#root',
-  data: [{
-    fn: 'x^2'
-  }]
+  data: [
+    { fn: 'x',
+      color: 'steelblue',
+      derivative: {
+        fn: '1',
+        updateOnMouseMove: true,
+        color: '#000000',
+      },
+    },
+    {
+      fn: 'x',
+      color: 'steelblue',
+      derivative: {
+        fn:'0',
+        updateOnMouseMove: true,
+        color: '#000000',
+      },
+    },
+  ]
 }
 
 class Update extends React.Component {
   changeOptions() {
-    if (options.data[0].fn === 'x^2') {
-      options.data[0].fn = 'x';
+    try {
+      let textbox = document.getElementById("editing") as HTMLInputElement;
+      if (textbox.value !== '') {
+        options.data[0].fn = textbox.value;
+        options.data[1].fn = textbox.value;
+        let compDerivative = derivative(textbox.value, 'x').toString();
+        options.data[0].derivative.fn = compDerivative;
+      }
+      functionPlot(options);
     }
-    else {
-      options.data[0].fn = 'x^2';
+    catch(err) {
+      console.log(err);
     }
-    functionPlot(options);
   }
 
   render() {
     return(
-      <button onClick={this.changeOptions}>
-        hi
-      </button>
+      <input type="text" id="editing" onInput={() => this.changeOptions()}>
+      </input>
     );
   }
 }
