@@ -1,11 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
 import functionPlot from 'function-plot';
 import {derivative} from 'mathjs';
-import { getParseTreeNode } from 'typescript';
 
 
 let options = {
