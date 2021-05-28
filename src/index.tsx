@@ -13,9 +13,14 @@ let graphRoot = 'graph';
 let options = {
   target: '#'+graphRoot,
   grid: true,
+  width: 800,
+  height: 500,
   data: [
     { // function
       fn: fn,
+      secants: [
+        {x0: x, x1: x+h},
+      ],
       color: 'steelblue',
     },
     { // h vector
@@ -33,6 +38,10 @@ let options = {
   ]
 }
 
+
+
+
+
 // we really on some coding shit now. Interfaces mother fucker
 
 interface graphProps {
@@ -44,13 +53,27 @@ interface graphProps {
 } // Just to clarify, the options prop basically will literally just opt out of typescript
 // https://www.typescriptlang.org/docs/handbook/basic-types.html at the any bit
 
+interface graphState {
+  fn: string,
+  derivative: string,
+  h: number,
+  x: number,
+  slope: number,
+  trueSlope: number,
+  graphRoot: string,
+  options: any, 
+}
+
 
 
 class Graph extends React.Component<graphProps,graphProps>  { // State is just props (but we will change it) for now, no need to use different interfaces
-  public state:graphProps = { // not your typical constructor, apparently this is the TypeScript way to do state now: https://stackoverflow.com/questions/51074355/cannot-assign-to-state-because-it-is-a-constant-or-a-read-only-property
+  public state:graphState = { // not your typical constructor, apparently this is the TypeScript way to do state now: https://stackoverflow.com/questions/51074355/cannot-assign-to-state-because-it-is-a-constant-or-a-read-only-property
     fn: this.props.fn,
+    derivative: derivative(this.props.fn,'x').toString(),
     h: this.props.h,
     x: this.props.x,
+    slope: ((evaluate(this.props.fn,{x : this.props.x + this.props.h}) - evaluate(this.props.fn,{x:this.props.x})) / this.props.h),
+    trueSlope: evaluate(derivative(this.props.fn,'x').toString(),{x: this.props.x}),
     graphRoot: this.props.graphRoot,
     options: this.props.options,
   }
@@ -64,9 +87,25 @@ class Graph extends React.Component<graphProps,graphProps>  { // State is just p
       if (textbox.value !== '') {
         let newState = Object.assign({}, this.state);
         let fn = textbox.value;
+        let x  = newState.x;
+        let h  = newState.h;
+        let rise = evaluate(fn,{x:x+h}) - evaluate(fn,{x:x});
+        // Update everything b/c new function
         newState.options.data[0].fn = fn;
         newState.fn = fn;
-        this.state = newState; // I trust daddy react implicitly about mutation but this seems convoluted. What do I know tho tbf, I'm a fucking monkey
+        newState.derivative = derivative(fn,'x').toString();
+        newState.options.data[0].secants[0] = {
+          x0: x,
+          x1: x+h,
+        }
+        newState.options.data[1].vector = [h,0];
+        newState.options.data[1].offset = [x,evaluate(fn,{x:x})];
+        newState.options.data[2].vector = [0, rise];
+        newState.options.data[2].offset = [x+h, evaluate(fn,{x:x})];
+        newState.slope = rise / h;
+        newState.trueSlope = evaluate(newState.derivative, {x:x});
+
+        this.setState(newState); // I trust daddy react implicitly about mutation but this seems convoluted. What do I know tho tbf, I'm a fucking monkey
       }
       functionPlot(this.state.options);
     }
@@ -81,16 +120,24 @@ class Graph extends React.Component<graphProps,graphProps>  { // State is just p
     let slider = document.getElementById("hslider") as HTMLInputElement;
     let newState = Object.assign({}, this.state); // React does NOT like you mutating the state directly so I have to do this copying monstrosity from SO: https://stackoverflow.com/questions/45557301/how-to-change-the-state-with-react-typescript-2-0
     let h = parseFloat(slider.value);
+    let rise = evaluate(fn,{x:x+h}) - evaluate(fn,{x:x}); // y1 - y2 convenience var
 
     // this.state is decapitated from the namespace here for readability and convenience
 
     newState.options.data[1].vector = [h,0];
     // no need to change first offset, doesn't have an h val for calculation
-    newState.options.data[2].vector = [0, evaluate(fn,{x:x+h}) - evaluate(fn,{x:x})];
+    newState.options.data[2].vector = [0, rise];
     newState.options.data[2].offset = [x+h, evaluate(fn,{x:x})];
+    newState.options.data[0].secants[0] = {
+      x0: x,
+      x1: x+h,
+    }
+    newState.slope = rise / h;
+    // no need to change true slope, only changes with x
+    
     newState.h = h;
+    this.setState(newState);
 
-    this.state = newState;
     functionPlot(this.state.options);
   }
 
@@ -100,7 +147,7 @@ class Graph extends React.Component<graphProps,graphProps>  { // State is just p
     let slider = document.getElementById("xslider") as HTMLInputElement;
     let newState = Object.assign({}, this.state); // React does NOT like you mutating the state directly so I have to do this copying monstrosity from SO: https://stackoverflow.com/questions/45557301/how-to-change-the-state-with-react-typescript-2-0
     let x = parseFloat(slider.value);
-
+    let rise = evaluate(fn,{x:x+h}) - evaluate(fn,{x:x}); // y1 - y2 convenience var
     // Again this.state is decapitated from the namespace here for readability and convenience
 
 
@@ -108,9 +155,15 @@ class Graph extends React.Component<graphProps,graphProps>  { // State is just p
     newState.options.data[1].offset = [x,evaluate(fn,{x:x})];
     newState.options.data[2].vector = [0, evaluate(fn,{x:x+h}) - evaluate(fn,{x:x})];
     newState.options.data[2].offset = [x+h, evaluate(fn,{x:x})];
+    newState.options.data[0].secants[0] = {
+      x0: x,
+      x1: x+h,
+    }
+    newState.slope = rise / h;
+    newState.trueSlope = evaluate(newState.derivative, {x:x});
     newState.x = x;
+    this.setState(newState);
 
-    this.state = newState;
     functionPlot(this.state.options);
   }
 
@@ -119,15 +172,25 @@ class Graph extends React.Component<graphProps,graphProps>  { // State is just p
       <div id ="container">
       <div id = {graphRoot}></div>
       <div id = "inputs">
+      <div id="slopes">
+      <h2 id = "calcslope"> {"Calculated Slope: " + Math.round((this.state.slope + Number.EPSILON) * 1000) / 1000} </h2>
+      <h2 id = "trueslope"> {"True Slope: " + Math.round((this.state.trueSlope + Number.EPSILON) * 1000) / 1000} </h2> 
+      </div>
+      <div id="sliders">
+      <div className = "barVal">
+      <h3 id = "hlabel"> {"h: " + this.state.h} </h3>
+      <input type="range" id ="hslider" name = "h" min="0.01" max="10" step="0.01" defaultValue = {this.props.h} onInput={() => this.changeH()}>
+      </input>
+      </div>
+      <div className = "barVal">
+      <h3 id = "xlabel"> {"x: " + this.state.x} </h3>
+      <input type = "range" id="xslider" name = "x" min = "-10" max = "10" step ="0.01" defaultValue = {this.props.x} onInput={() => this.changeX()}></input>
+      </div>
+      </div>
       <input type="text" id="editing" onInput={() => this.changeFn()}>
       </input>
-      <label htmlFor={"h"}> Change h </label>
-      <input type="range" id ="hslider" name = "h" min="0" max="10" step="0.01" onInput={() => this.changeH()}>
-      </input>
-      <label htmlFor={"x"}> Change x </label>
-      <input type = "range" id="xslider" name = "x" min = "-10" max = "10" step ="0.01" onInput={() => this.changeX()}></input>
       </div>
-      </div >
+      </div>
     );
   }
 }
