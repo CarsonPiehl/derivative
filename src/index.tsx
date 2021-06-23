@@ -1,10 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+//@ts-ignore 
+import MathJax from 'react-mathjax2'
 import reportWebVitals from './reportWebVitals';
 import functionPlot from 'function-plot';
 import {derivative,evaluate} from 'mathjs';
-import { ReactComponent } from '*.svg';
+import 'katex/dist/katex.min.css';
+import TeX from '@matejmazur/react-katex';
 
 let fn = 'x*x';
 let h = 5;
@@ -364,12 +367,14 @@ class HGraph extends React.Component<hGraphProps,hGraphProps>  { // State is jus
     );
   }
 }
-
 ReactDOM.render(
-  <React.StrictMode>
+  <div>
+    <h1> The Derivative </h1>
+    <p> If </p>
+    <TeX math="m = \frac{y_1 - y_2}{x_1 - x_2}" block/>
     <HGraph fn={fn} h={h} x={x} graphRoot={graphRoot} options={hOptions}/>
     <AGraph fn={fn} a={10} x={x} graphRoot = {aGraphRoot} options={aOptions}/>
-  </React.StrictMode>,
+  </div>,
   document.getElementById('root')
 );
 functionPlot(hOptions); // Ideally we would get the initial call inside the class, but idk how
