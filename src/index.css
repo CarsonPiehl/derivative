@@ -5,6 +5,14 @@
     width: 800px;
 }
 
+p {
+    font-size: 20px;
+    font-family: 'Lato', sans-serif;
+}
+
+#root {
+    margin: 400px;
+}
 #slopes {
     display: flex;
     flex-direction: row;
@@ -23,4 +31,8 @@
     flex-direction: row;
     justify-content: space-around;
     border: 2px solid black;
+}
+
+.math {
+    font-size: 26px;
 }
