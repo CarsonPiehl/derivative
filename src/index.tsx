@@ -6,6 +6,7 @@ import functionPlot from 'function-plot';
 import {derivative,evaluate} from 'mathjs';
 import 'katex/dist/katex.min.css';
 import TeX from '@matejmazur/react-katex';
+import { request } from 'http';
 
 let fn = 'x*x';
 let h = 5;
@@ -14,6 +15,7 @@ let graphRoot = 'hgraph';
 let aGraphRoot = 'agraph';
 let riseRoot1 = 'riseroot1';
 let riseRoot2 = 'riseroot2';
+let ballGraph = 'ballshaha'
 
 let riseRunOptions1 = {
   target: '#' + riseRoot1,
@@ -47,7 +49,7 @@ let riseRunOptions2 = {
   height: 500,
   data: [
     { // function
-      fn: '2x',
+      fn: 'x^2',
       color: 'steelblue',
     },
     { // x vector THIS IS ALL HARD TYPED. TODO: FIX
@@ -122,6 +124,30 @@ let hOptions = {
   ]
 }
 
+let ballOptions = {
+  target: '#'+ballGraph,
+  grid: true,
+  width: 800,
+  height: 500,
+  data: [
+    { // ball line
+      points: [
+
+      ],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'points' as 'points',
+    },
+    { 
+      fn: '2x'
+    },
+
+  ]
+
+}
+
+function round(number:number) {
+  return Math.round((number + Number.EPSILON) * 1000) / 1000;
+}
 
 
 
@@ -145,6 +171,24 @@ interface aGraphProps {
   options: any,
 }
 
+interface riseRunProps {
+  fn: string,
+  derivative: string,
+  x2: number,
+  x1: number,
+  graphRoot: string,
+  options: any,
+}
+
+interface ballProps {
+  fn: string,
+  derivative: string,
+  options: any,
+  startX: number,
+  endX: number,
+  ticks: number,
+  graphRoot: string,
+}
 
 interface hGraphState {
   fn: string,
@@ -176,13 +220,13 @@ interface riseRunState {
   options: any,
 }
 
-interface riseRunProps {
+interface ballState {
   fn: string,
   derivative: string,
-  x2: number,
-  x1: number,
-  graphRoot: string,
   options: any,
+  tick: number,
+  on: boolean,
+  increment: number,
 }
 
 
@@ -290,8 +334,8 @@ class AGraph extends React.Component<aGraphProps> {
       <div id = {this.state.graphRoot} onLoad={() => functionPlot(this.state.options)}></div>
       <div id = "inputs">
       <div id="slopes">
-      <h2 id = "calcslope"> {"Calculated Slope: " + Math.round((this.state.slope + Number.EPSILON) * 1000) / 1000} </h2>
-      <h2 id = "trueslope"> {"True Slope: " + Math.round((this.state.trueSlope + Number.EPSILON) * 1000) / 1000} </h2> 
+      <h2 id = "calcslope"> {"Calculated Slope: " + round(this.state.slope)} </h2>
+      <h2 id = "trueslope"> {"True Slope: " + round(this.state.trueSlope)} </h2> 
       </div>
       <div id="sliders">
       <div className = "barVal">
@@ -414,8 +458,8 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
       <div id = {this.state.graphRoot} onLoad={() => functionPlot(this.state.options)}></div>
       <div id = "inputs">
       <div id="slopes">
-      <h2 id = "calcslope"> {"Calculated Slope: " + Math.round((this.state.slope + Number.EPSILON) * 1000) / 1000} </h2>
-      <h2 id = "trueslope"> {"True Slope: " + Math.round((this.state.trueSlope + Number.EPSILON) * 1000) / 1000} </h2> 
+      <h2 id = "calcslope"> {"Calculated Slope: " + round(this.state.slope)} </h2>
+      <h2 id = "trueslope"> {"True Slope: " + round(this.state.trueSlope)} </h2> 
       </div>
       <div id="sliders">
       <div className = "barVal">
@@ -493,13 +537,182 @@ class RiseRunStatic extends React.Component<riseRunProps> {
     return(
       <div>
         <div id={this.props.graphRoot} onLoad={() => functionPlot(this.props.options)}></div>
-        <TeX className="math" math = {"m = " + ((evaluate(this.state.fn,{x:this.state.x2}) - evaluate(this.state.fn,{x:this.state.x1})) / (this.state.x2 - this.state.x1)) + "\\: = \\:" + "\\frac{\\color{#4682b4}" + evaluate(this.state.fn,{x:this.state.x2}) + "\\color{#000} \\: - \\: \\color{#b47846}" + evaluate(this.state.fn,{x:this.state.x1}) + "\\color{#000}}{\\color{#4682b4}" + this.state.x2 + "\\color{#000} \\: - \\: \\color{#b47846}" + this.state.x1 +"}"} block/>
-        <input type = "range" id="x1slider" name = "x" min = "-10" max = "10" step ="0.01" defaultValue = {this.props.x1} onChange={(event) => this.changeX1(parseFloat(event.target.value))}></input>
-        <input type = "range" id="x2slider" name = "x" min = "-10" max = "10" step ="0.01" defaultValue = {this.props.x2} onChange={(event) => this.changeX2(parseFloat(event.target.value))}></input>
+        <TeX className="math" math = {"m = " + round((evaluate(this.state.fn,{x:this.state.x2}) - evaluate(this.state.fn,{x:this.state.x1})) / (this.state.x2 - this.state.x1)) + "\\: = \\:" + "\\frac{\\color{#4682b4}" + round(evaluate(this.state.fn,{x:this.state.x2})) + "\\color{#000} \\: - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x1})) + "\\color{#000}}{\\color{#4682b4}" + this.state.x2 + "\\color{#000} \\: - \\: \\color{#b47846}" + this.state.x1 +"}"} block/>
+        <input type = "range" id="x1slider" name = "x" min = "-10" max = "10" step ="0.1" defaultValue = {this.props.x1} onChange={(event) => this.changeX1(parseFloat(event.target.value))}></input>
+        <input type = "range" id="x2slider" name = "x" min = "-10" max = "10" step ="0.1" defaultValue = {this.props.x2} onChange={(event) => this.changeX2(parseFloat(event.target.value))}></input>
 
       </div>
     )
   }
+}
+
+class RiseRunAntiStatic extends React.Component<riseRunProps> {
+  public state:riseRunState = {
+    fn: this.props.fn,
+    derivative: this.props.derivative,
+    x2: this.props.x2,
+    x1: this.props.x1,
+    options: this.props.options
+  }
+
+  changeFn(fn: string) {
+    try {
+      let x1 = this.state.x1;
+      let x2 = this.state.x2;
+
+      let newState = Object.assign({}, this.state); // React does NOT like you mutating the state directly so I have to do this copying monstrosity from SO: https://stackoverflow.com/questions/45557301/how-to-change-the-state-with-react-typescript-2-0
+      let rise = evaluate(fn,{x:x2}) - evaluate(fn,{x:x1}); // y1 - y2 convenience var
+      // Again this.state is decapitated from the namespace here for readability and convenience
+
+
+      
+      newState.options.data[1].vector = [x2-x1,0];
+      newState.options.data[1].offset = [x1,evaluate(fn,{x:x1})];
+      // no need to change first offset doesn't use x2
+      newState.options.data[2].vector = [0, rise];
+      newState.options.data[2].offset = [x2, evaluate(fn,{x:x1})];
+      newState.fn = fn;
+      newState.options.data[0].fn = fn;
+      newState.derivative = derivative(fn,'x').toString();
+
+      this.setState(newState);
+
+      functionPlot(this.state.options);
+    }
+    catch(err) {
+      console.log(err);
+    }
+  }
+
+  changeX2(x: number) {
+    let fn = this.state.fn;
+    let x1 = this.state.x1;
+    let x2 = x;
+    let newState = Object.assign({}, this.state); // React does NOT like you mutating the state directly so I have to do this copying monstrosity from SO: https://stackoverflow.com/questions/45557301/how-to-change-the-state-with-react-typescript-2-0
+    let rise = evaluate(fn,{x:x2}) - evaluate(fn,{x:x1}); // y1 - y2 convenience var
+    // Again this.state is decapitated from the namespace here for readability and convenience
+    
+    
+    newState.options.data[1].vector = [x2-x1,0];
+    // no need to change first offset doesn't use x2
+    newState.options.data[2].vector = [0, rise];
+    newState.options.data[2].offset = [x2, evaluate(fn,{x:x1})];
+    newState.x2 = x2;
+
+    this.setState(newState);
+
+    functionPlot(this.state.options);
+  }
+
+  changeX1(x: number) {
+    let fn = this.state.fn;
+    let x1 = x;
+    let x2 = this.state.x2;
+    let newState = Object.assign({}, this.state); // React does NOT like you mutating the state directly so I have to do this copying monstrosity from SO: https://stackoverflow.com/questions/45557301/how-to-change-the-state-with-react-typescript-2-0
+    let rise = evaluate(fn,{x:x2}) - evaluate(fn,{x:x1}); // y1 - y2 convenience var
+    // Again this.state is decapitated from the namespace here for readability and convenience
+
+
+    newState.options.data[1].vector = [x2-x1,0];
+    newState.options.data[1].offset = [x1,evaluate(fn,{x:x1})]
+    newState.options.data[2].vector = [0, rise];
+    newState.options.data[2].offset = [x2, evaluate(fn,{x:x1})];
+    newState.x1 = x1;
+
+    this.setState(newState);
+
+    functionPlot(this.state.options);
+
+  }
+
+
+
+  render() {
+    return(
+      <div>
+        <div id={this.props.graphRoot} onLoad={() => functionPlot(this.props.options)}></div>
+        <TeX className="math" math = {"m = " + round((evaluate(this.state.fn,{x:this.state.x2}) - evaluate(this.state.fn,{x:this.state.x1})) / (this.state.x2 - this.state.x1)) + "\\: = \\:" + "\\frac{\\color{#4682b4}" + round(evaluate(this.state.fn,{x:this.state.x2})) + "\\color{#000} \\: - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x1})) + "\\color{#000}}{\\color{#4682b4}" + this.state.x2 + "\\color{#000} \\: - \\: \\color{#b47846}" + this.state.x1 +"}" } block />
+        <input type = "range" id="x1slider" name = "x" min = "-10" max = "10" step ="0.1" defaultValue = {this.props.x1} onChange={(event) => this.changeX1(parseFloat(event.target.value))}></input>
+        <input type = "range" id="x2slider" name = "x" min = "-10" max = "10" step ="0.1" defaultValue = {this.props.x2} onChange={(event) => this.changeX2(parseFloat(event.target.value))}></input>
+        <input type = "text" id ="fninput" defaultValue = {this.props.fn} onChange = {(event) => this.changeFn(event.target.value)}></input>
+      </div>
+    )
+  }
+}
+ // TODO: FIGURE OUT WHY THE FX PLOT IS NOT UPDATING
+ // MAYBE BECAUSE OF ASYNC SET STATE? TRY DIRECTLY UPDATING AND SEE IF IT FIXES IT
+class BallFunction extends React.Component<ballProps> {
+  public state:ballState = {
+    fn: this.props.fn,
+    derivative: this.props.derivative,
+    options: this.props.options,
+    tick: 0,
+    on: false,
+    increment: Math.abs(this.props.endX - this.props.startX)/this.props.ticks,
+  }
+  
+  handleToggle() {
+    if(this.state.on === false) {
+      this.turnOn();
+    }
+    else {
+      this.turnOff();
+    }
+  }
+
+  turnOn() {
+    let newState = Object.assign({}, this.state);     
+    newState.on = true;
+    newState.options.data[0].points.push(this.props.startX,evaluate(this.state.fn,{x:this.props.startX}));
+    newState.tick++;
+    this.setState(newState, () => this.update());
+    functionPlot(this.state.options);
+    // From https://stackoverflow.com/questions/4011793/this-is-undefined-in-javascript-class-methods
+  
+  }
+
+  turnOff() {
+    let newState = Object.assign({}, this.state);     
+    newState.on = false;
+    this.setState(newState);
+  }
+
+  reset() {
+
+  }
+
+  update() {
+    console.log('di')
+    if (this.state.on) {
+      let newState = Object.assign({}, this.state);     
+      if (this.state.tick < this.props.ticks) {
+        let preOptions = this.state.options;
+        let curX = this.props.startX + (this.state.increment*this.state.tick);
+        let curY = evaluate(this.state.fn,{x:curX});
+        preOptions.data[0].points.push([curX,curY]);
+        newState.options = preOptions;
+        newState.tick++;
+        functionPlot(newState.options);
+        this.setState(newState, () => requestAnimationFrame(this.update.bind(this)));
+      }
+      else {
+        newState.tick = 0;
+        newState.options.data[0].points = [];
+        newState.on = false;
+        this.setState(newState);
+      }
+    }
+  }
+
+  render() {
+    return(
+    <div>
+      <div id={this.props.graphRoot} onLoad={() => functionPlot(this.props.options)}></div>
+      <button onClick={() => this.handleToggle()}> {String(this.state.on)} </button>
+    </div>
+    )
+  }
+
 }
 
 // <HGraph fn={'x^2'} h={5} x={0} graphRoot={graphRoot} options={hOptions}></HGraph>
@@ -519,13 +732,15 @@ ReactDOM.render(
     <TeX className="math" math="m = \frac{100\: miles\: - \:0\:miles}{3 \: hours \: - \: 0 \: hours} = \frac{50\:miles}{hour}" block /> 
     <p> For lines, the whole domain has the same slope, one of their fundamental qualities. The line 2x, for example, has the same slope of 2, no matter what point we look at. </p>
     <div id='riseruns'> 
-    <RiseRunStatic fn={"2x"} derivative={'2'} x2={10} x1={0} options={riseRunOptions1} graphRoot={riseRoot1}></RiseRunStatic>
+    <RiseRunStatic fn={"2x"} derivative={'2'} x2={5} x1={0} options={riseRunOptions1} graphRoot={riseRoot1}></RiseRunStatic>
     </div>
     <p> For lines, we know the slope at every point because it was the same as any other! But for other functions, we don’t. Can we find it? </p>
     <p> Maybe we can use the same equation that works for lines on the more complex curves? </p>
-    <p> We quickly notice a few problems with this approach. First of all, what points do we pick? If we want to find the slope at x=1 here, do we pick x=1 and x=2? x=0 and x=2? Any points we pick will be random for a specific point. </p>
+    <RiseRunAntiStatic fn={"x^2"} derivative={'2x'} x2={5} x1={0} options={riseRunOptions2} graphRoot={riseRoot2}></RiseRunAntiStatic>
+    <p> We quickly notice a few problems with this approach. First of all, what points do we pick? If we want to find the slope at x=1, do we pick x=1 and x=2? x=0 and x=2? </p>
     <p> An even bigger problem makes itself clear too. No matter what two points we pick, the slope at the point won’t be quite right. </p>
     <p> We can see this geometrically. We can imagine the function like a ball on a string, tracking the function. If the string is cut, the ball should move in a straight line in the same direction it was moving right before the string was cut. If we want to find the line the ball should go in at any point, using a line between two points will not really work because the line of the ball only intersects the function at one point, right when the string is cut. </p>
+    <BallFunction fn={"x^2"} derivative={'2x'} options={ballOptions} startX = {-10} endX = {10} ticks = {500} graphRoot={ballGraph}></BallFunction>
     <p> We can see something though. The closer the two points get to each other, the closer their line is to the real path of our hypothetical ball. </p>
     <p> Maybe we can just make the two points the same one! That would solve the issue of having two points represent a line with one intersection. </p>
     <TeX className="math" math="\frac{1-1}{1-1} = \frac{0}{0}" block/>
@@ -569,7 +784,8 @@ ReactDOM.render(
 functionPlot(hOptions); // Ideally we would get the initial call inside the class, but idk how
 functionPlot(aOptions);
 functionPlot(riseRunOptions1);
-functionPlot(riseRunOptions2)
+functionPlot(riseRunOptions2);
+functionPlot(ballOptions);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
