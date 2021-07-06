@@ -11,6 +11,7 @@
     "@types/node": "^12.20.13",
     "@types/react": "^17.0.6",
     "@types/react-dom": "^17.0.5",
+    "create-react-app": "^4.0.3",
     "function-plot": "^1.22.7",
     "katex": "^0.13.11",
     "math.js": "^1.1.46",
