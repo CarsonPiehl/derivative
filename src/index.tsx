@@ -6,7 +6,6 @@ import functionPlot from 'function-plot';
 import {derivative,evaluate} from 'mathjs';
 import 'katex/dist/katex.min.css';
 import TeX from '@matejmazur/react-katex';
-import { request } from 'http';
 
 let fn = 'x*x';
 let h = 5;
@@ -15,7 +14,7 @@ let graphRoot = 'hgraph';
 let aGraphRoot = 'agraph';
 let riseRoot1 = 'riseroot1';
 let riseRoot2 = 'riseroot2';
-let ballGraph = 'ballshaha'
+let ballGraph = 'ballshaha';
 
 let riseRunOptions1 = {
   target: '#' + riseRoot1,
@@ -138,13 +137,17 @@ let ballOptions = {
       fnType: 'points' as 'points',
     },
     { 
-      fn: '2x'
+      points: [
+
+      ],
+      graphType: 'scatter' as 'scatter',
+      fnType: 'points' as 'points',
     },
 
   ]
-
 }
 
+// Number Rounding function
 function round(number:number) {
   return Math.round((number + Number.EPSILON) * 1000) / 1000;
 }
@@ -185,6 +188,7 @@ interface ballProps {
   derivative: string,
   options: any,
   startX: number,
+  tangentX: number,
   endX: number,
   ticks: number,
   graphRoot: string,
@@ -223,6 +227,7 @@ interface riseRunState {
 interface ballState {
   fn: string,
   derivative: string,
+  tangent: string,
   options: any,
   tick: number,
   on: boolean,
@@ -642,9 +647,11 @@ class RiseRunAntiStatic extends React.Component<riseRunProps> {
  // TODO: FIGURE OUT WHY THE FX PLOT IS NOT UPDATING
  // MAYBE BECAUSE OF ASYNC SET STATE? TRY DIRECTLY UPDATING AND SEE IF IT FIXES IT
 class BallFunction extends React.Component<ballProps> {
+
   public state:ballState = {
     fn: this.props.fn,
     derivative: this.props.derivative,
+    tangent: evaluate(this.props.derivative,{x:this.props.tangentX}) + 'x + ' + (evaluate(this.props.fn,{x:this.props.tangentX}) - evaluate(this.props.derivative,{x:this.props.tangentX})*this.props.tangentX),
     options: this.props.options,
     tick: 0,
     on: false,
@@ -660,13 +667,31 @@ class BallFunction extends React.Component<ballProps> {
     }
   }
 
-  turnOn() {
-    let newState = Object.assign({}, this.state);     
-    newState.on = true;
-    newState.options.data[0].points.push(this.props.startX,evaluate(this.state.fn,{x:this.props.startX}));
-    newState.tick++;
-    this.setState(newState, () => this.update());
+  reset() {
+    let newState = Object.assign({}, this.state);
+    newState.options.data[0].points = [[this.props.startX,evaluate(this.state.fn,{x:this.props.startX})]];
+    newState.tick = 0;
+    newState.on = false;
+    this.setState(newState);
     functionPlot(this.state.options);
+  }
+
+  testButton() {
+    let newState = Object.assign({}, this.state);
+    newState.options.data[0].points.push(Math.random(), Math.random)
+  }
+
+  turnOn() {
+    let newState = Object.assign({}, this.state); 
+    if (evaluate(this.props.derivative,{x:this.props.tangentX}) === 0) {
+      newState.tangent = String((evaluate(this.props.fn,{x:this.props.tangentX}) - evaluate(this.props.derivative,{x:this.props.tangentX})*this.props.tangentX));
+    }
+    newState.options.data[1].points = [[this.props.tangentX,evaluate(this.state.fn,{x:this.props.tangentX})]];
+    newState.on = true;
+    newState.tick++;
+    this.setState(newState);
+    functionPlot(this.state.options);
+    requestAnimationFrame(this.update.bind(this));
     // From https://stackoverflow.com/questions/4011793/this-is-undefined-in-javascript-class-methods
   
   }
@@ -677,27 +702,31 @@ class BallFunction extends React.Component<ballProps> {
     this.setState(newState);
   }
 
-  reset() {
-
-  }
-
   update() {
-    console.log('di')
     if (this.state.on) {
       let newState = Object.assign({}, this.state);     
       if (this.state.tick < this.props.ticks) {
-        let preOptions = this.state.options;
         let curX = this.props.startX + (this.state.increment*this.state.tick);
-        let curY = evaluate(this.state.fn,{x:curX});
-        preOptions.data[0].points.push([curX,curY]);
-        newState.options = preOptions;
-        newState.tick++;
-        functionPlot(newState.options);
-        this.setState(newState, () => requestAnimationFrame(this.update.bind(this)));
+        console.log(curX);
+        let curY;
+        console.log(evaluate(this.state.tangent,{x:curX}));
+        if (curX > this.props.tangentX) {
+          console.log(evaluate(this.state.tangent,{x:curX}));
+          curY = evaluate(this.state.tangent,{x:curX});
+        }
+        else {
+          curY = evaluate(this.state.fn,{x:curX});
+        }
+        newState.options.data[0].points.push([curX,curY]);
+        newState.tick+=1;
+        console.log(this.state.tangent);
+        this.setState(newState);
+        //console.log(this.state.options.data[0].points.length)
+        functionPlot(this.state.options);
+        //console.log(this.state.options.data[0].points.length)
+        requestAnimationFrame(this.update.bind(this));
       }
       else {
-        newState.tick = 0;
-        newState.options.data[0].points = [];
         newState.on = false;
         this.setState(newState);
       }
@@ -707,8 +736,10 @@ class BallFunction extends React.Component<ballProps> {
   render() {
     return(
     <div>
-      <div id={this.props.graphRoot} onLoad={() => functionPlot(this.props.options)}></div>
+      <div id={this.props.graphRoot}></div>
       <button onClick={() => this.handleToggle()}> {String(this.state.on)} </button>
+      <button onClick={() => this.reset()}> {'Reset!'} </button>
+
     </div>
     )
   }
@@ -739,8 +770,9 @@ ReactDOM.render(
     <RiseRunAntiStatic fn={"x^2"} derivative={'2x'} x2={5} x1={0} options={riseRunOptions2} graphRoot={riseRoot2}></RiseRunAntiStatic>
     <p> We quickly notice a few problems with this approach. First of all, what points do we pick? If we want to find the slope at x=1, do we pick x=1 and x=2? x=0 and x=2? </p>
     <p> An even bigger problem makes itself clear too. No matter what two points we pick, the slope at the point won’t be quite right. </p>
-    <p> We can see this geometrically. We can imagine the function like a ball on a string, tracking the function. If the string is cut, the ball should move in a straight line in the same direction it was moving right before the string was cut. If we want to find the line the ball should go in at any point, using a line between two points will not really work because the line of the ball only intersects the function at one point, right when the string is cut. </p>
-    <BallFunction fn={"x^2"} derivative={'2x'} options={ballOptions} startX = {-10} endX = {10} ticks = {500} graphRoot={ballGraph}></BallFunction>
+    <p> We can see this geometrically. We can imagine the function like a ball on a string, tracking the function. If the string is cut, the ball should move in a straight line in the same direction it was moving right before the string was cut.</p>
+    <BallFunction fn={"sin(x)"} derivative={'cos(x)'} options={ballOptions} startX = {-10} tangentX = {Math.PI/2} endX = {10} ticks = {500} graphRoot={ballGraph}></BallFunction>
+    <p> If we want to find the line the ball should go in at any point, using a line between two points will not really work because the line of the ball only intersects the function at one point, right when the string is cut. </p>
     <p> We can see something though. The closer the two points get to each other, the closer their line is to the real path of our hypothetical ball. </p>
     <p> Maybe we can just make the two points the same one! That would solve the issue of having two points represent a line with one intersection. </p>
     <TeX className="math" math="\frac{1-1}{1-1} = \frac{0}{0}" block/>
@@ -748,9 +780,13 @@ ReactDOM.render(
     <p> Our normal slope equation is: </p>
     <TeX className="math" math="\frac{y_2 - y_1}{x_2 - x_1}" block/>
     <p> We can rewrite this to an equation based on one point and how far away the second point is with some function notation. </p>
-    <p> Our new equation is: </p>
+    <p> We know that:  <TeX className="math" math="y_2 = f(x_2)"/> and  <TeX className="math" math="y_1 = f(x_1)"/> </p>
+    <p> We can define h to be the difference between the two Xs, or <TeX className="math" math="h = x_2 - x_1"/></p>
+    <p> When we replace the Ys with our new function notation, and the bottom difference with our new variable h, we end up with this equation: </p>
+    <TeX className="math" math="\frac{f(x_2) - f(x_1)}{h}" block/>
+    <p> We still want only one point, so lets rewrite the first x. If we add <TeX className="math" math="x_1"/> to each side of the definition of h: <TeX className="math" math="x_2 = h + x_1"/> </p>
+    <p> Once we replace <TeX className="math" math="x_2"/> , our new equation is: </p>
     <TeX className="math" math="\frac{f(x_1+h) - f(x_1)}{h}" block/>
-    <p> where h is the difference between the two point's x-coordinates, x2 - x1</p>
     <p> As we can see, x1 + x2 - x1 is just equal to x2, so this equation simplifies down to our same slope equation, but with function notation instead of Ys</p>
     <p> Lets graph this for x=2 in x^2. If we do a little math: </p>
     <TeX className="math" math="\frac{f(2+h)-f(2)}{h} = \frac{h^2+4h+4 - 4}{h}" block/>
