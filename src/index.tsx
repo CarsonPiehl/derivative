@@ -143,6 +143,12 @@ let ballOptions = {
       graphType: 'scatter' as 'scatter',
       fnType: 'points' as 'points',
     },
+    {
+      fn: 'sin(x)',
+      skipTip: true,
+      nSamples: 100,
+      graphType: 'scatter' as 'scatter',
+    }
 
   ]
 }
@@ -194,6 +200,19 @@ interface ballProps {
   graphRoot: string,
 }
 
+interface ballPropsSecant {
+  fn: string,
+  derivative: string,
+  secantDist: number,
+  options: any,
+  startX: number,
+  tangentX: number,
+  endX: number,
+  ticks: number,
+  graphRoot: string,
+}
+
+
 interface hGraphState {
   fn: string,
   derivative: string,
@@ -228,11 +247,25 @@ interface ballState {
   fn: string,
   derivative: string,
   tangent: string,
+  tangentX: number,
   options: any,
   tick: number,
   on: boolean,
   increment: number,
 }
+
+interface ballStateSecant {
+  fn: string,
+  derivative: string,
+  tangent: string,
+  secantDist: number,
+  tangentX: number,
+  options: any,
+  tick: number,
+  on: boolean,
+  increment: number,
+}
+
 
 
 class AGraph extends React.Component<aGraphProps> {
@@ -644,21 +677,21 @@ class RiseRunAntiStatic extends React.Component<riseRunProps> {
     )
   }
 }
- // TODO: FIGURE OUT WHY THE FX PLOT IS NOT UPDATING
- // MAYBE BECAUSE OF ASYNC SET STATE? TRY DIRECTLY UPDATING AND SEE IF IT FIXES IT
-class BallFunction extends React.Component<ballProps> {
+
+class BallFunction extends React.Component<ballProps, ballState> {
 
   public state:ballState = {
     fn: this.props.fn,
     derivative: this.props.derivative,
     tangent: evaluate(this.props.derivative,{x:this.props.tangentX}) + 'x + ' + (evaluate(this.props.fn,{x:this.props.tangentX}) - evaluate(this.props.derivative,{x:this.props.tangentX})*this.props.tangentX),
+    tangentX: this.props.tangentX,
     options: this.props.options,
     tick: 0,
     on: false,
     increment: Math.abs(this.props.endX - this.props.startX)/this.props.ticks,
   }
   
-  handleToggle() {
+  handleToggle() { // Deprecated cuz I made something better
     if(this.state.on === false) {
       this.turnOn();
     }
@@ -667,26 +700,74 @@ class BallFunction extends React.Component<ballProps> {
     }
   }
 
-  reset() {
-    let newState = Object.assign({}, this.state);
-    newState.options.data[0].points = [[this.props.startX,evaluate(this.state.fn,{x:this.props.startX})]];
-    newState.tick = 0;
-    newState.on = false;
-    this.setState(newState);
+  reset(fn = "joebiden") {
+    let resState = Object.assign({}, this.state);
+    if (fn !== "joebiden") {
+      resState.fn = fn;
+      resState.options.data[0].fn = fn;
+      resState.options.data[2].fn = fn;
+      resState.derivative = derivative(fn,'x').toString();
+      resState.tangent = evaluate(resState.derivative,{x:resState.tangentX}) + 'x + ' + (evaluate(resState.fn,{x:resState.tangentX}) - evaluate(resState.derivative,{x:resState.tangentX})*resState.tangentX)
+    }
+    resState.options.data[0].points = [[this.props.startX,evaluate(resState.fn,{x:this.props.startX})]];
+    resState.tick = 0;
+    resState.on = false;
+    this.setState(resState);
     functionPlot(this.state.options);
   }
 
-  testButton() {
-    let newState = Object.assign({}, this.state);
-    newState.options.data[0].points.push(Math.random(), Math.random)
+  stateExec(num:number) {
+    console.log("set state executed " + num);
+    console.log(this.state.options.data[0].fn)
+    console.log(this.state.fn)
   }
 
-  turnOn() {
-    let newState = Object.assign({}, this.state); 
-    if (evaluate(this.props.derivative,{x:this.props.tangentX}) === 0) {
-      newState.tangent = String((evaluate(this.props.fn,{x:this.props.tangentX}) - evaluate(this.props.derivative,{x:this.props.tangentX})*this.props.tangentX));
+  changeFn(fn:string) {
+    try {
+      if (fn !== '') {
+        this.reset(fn);
+      }
     }
-    newState.options.data[1].points = [[this.props.tangentX,evaluate(this.state.fn,{x:this.props.tangentX})]];
+    catch(err) {
+      console.log(err);
+    }
+  }
+
+  changeTanX(tanX:number) {
+    try {
+      let tangent = evaluate(this.state.derivative,{x:tanX}) + 'x + ' + (evaluate(this.state.fn,{x:tanX}) - evaluate(this.state.derivative,{x:tanX})*tanX);
+      let newScatter = [];
+      for(let i:number = 0; i < this.props.ticks; i++) {
+
+        let curX = this.props.startX + i*this.state.increment;
+        let curY;
+        if (curX < tanX) {
+          curY = evaluate(this.state.fn,{x:curX});
+        }
+        else {
+          curY = evaluate(tangent,{x:curX});
+        }
+        newScatter.push([curX,curY]);
+      }
+      let newState = Object.assign({}, this.state); 
+      newState.tangent = tangent;
+      newState.tangentX = tanX;
+      newState.options.data[0].points = newScatter;
+      newState.options.data[1].points = [[tanX, evaluate(tangent,{x:tanX})]]
+      this.setState(newState);
+      functionPlot(this.state.options);
+    }
+    catch(e) {
+      console.log(e);
+    }
+  }
+
+  turnOn() { // Deprecated cuz I made something better
+    let newState = Object.assign({}, this.state); 
+    if (evaluate(this.props.derivative,{x:this.state.tangentX}) === 0) {
+      newState.tangent = String((evaluate(this.state.fn,{x:this.state.tangentX}) - evaluate(this.state.derivative,{x:this.state.tangentX})*this.state.tangentX));
+    }
+    newState.options.data[1].points = [[this.state.tangentX,evaluate(this.state.fn,{x:this.state.tangentX})]];
     newState.on = true;
     newState.tick++;
     this.setState(newState);
@@ -696,13 +777,13 @@ class BallFunction extends React.Component<ballProps> {
   
   }
 
-  turnOff() {
+  turnOff() { // Deprecated cuz I made something better
     let newState = Object.assign({}, this.state);     
     newState.on = false;
     this.setState(newState);
   }
 
-  update() {
+  update() { // Deprecated cuz I made something better
     if (this.state.on) {
       let newState = Object.assign({}, this.state);     
       if (this.state.tick < this.props.ticks) {
@@ -710,7 +791,7 @@ class BallFunction extends React.Component<ballProps> {
         console.log(curX);
         let curY;
         console.log(evaluate(this.state.tangent,{x:curX}));
-        if (curX > this.props.tangentX) {
+        if (curX > this.state.tangentX) {
           console.log(evaluate(this.state.tangent,{x:curX}));
           curY = evaluate(this.state.tangent,{x:curX});
         }
@@ -737,16 +818,164 @@ class BallFunction extends React.Component<ballProps> {
     return(
     <div>
       <div id={this.props.graphRoot}></div>
-      <button onClick={() => this.handleToggle()}> {String(this.state.on)} </button>
-      <button onClick={() => this.reset()}> {'Reset!'} </button>
-
+      <input type={'text'} onChange= {(event) => this.changeFn(event.target.value)} defaultValue={'sin(x)'}></input>
+      <input type={'range'} onChange= {(event) => this.changeTanX(parseFloat(event.target.value))} defaultValue={0} min={this.props.startX} max={this.props.endX} step={this.state.increment}></input>
     </div>
     )
   }
 
 }
 
-// <HGraph fn={'x^2'} h={5} x={0} graphRoot={graphRoot} options={hOptions}></HGraph>
+
+class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecant> {
+
+  public state:ballStateSecant = {
+    fn: this.props.fn,
+    derivative: this.props.derivative,
+    secantDist: this.props.secantDist,
+    tangent: evaluate(this.props.derivative,{x:this.props.tangentX}) + 'x + ' + (evaluate(this.props.fn,{x:this.props.tangentX}) - evaluate(this.props.derivative,{x:this.props.tangentX})*this.props.tangentX),
+    tangentX: this.props.tangentX,
+    options: this.props.options,
+    tick: 0,
+    on: false,
+    increment: Math.abs(this.props.endX - this.props.startX)/this.props.ticks,
+  }
+  
+  handleToggle() {
+    if(this.state.on === false) {
+      this.turnOn();
+    }
+    else {
+      this.turnOff();
+    }
+  }
+
+  reset(fn = "joebiden") {
+    let resState = Object.assign({}, this.state);
+    if (fn !== "joebiden") {
+      resState.fn = fn;
+      resState.options.data[0].fn = fn;
+      resState.options.data[2].fn = fn;
+      resState.derivative = derivative(fn,'x').toString();
+      resState.tangent = evaluate(resState.derivative,{x:resState.tangentX}) + 'x + ' + (evaluate(resState.fn,{x:resState.tangentX}) - evaluate(resState.derivative,{x:resState.tangentX})*resState.tangentX)
+    }
+    resState.options.data[0].points = [[this.props.startX,evaluate(resState.fn,{x:this.props.startX})]];
+    resState.tick = 0;
+    resState.on = false;
+    this.setState(resState);
+    functionPlot(this.state.options);
+  }
+
+  stateExec(num:number) {
+    console.log("set state executed " + num);
+    console.log(this.state.options.data[0].fn)
+    console.log(this.state.fn)
+  }
+
+  changeFn(fn:string) {
+    try {
+      if (fn !== '') {
+        this.reset(fn);
+      }
+    }
+    catch(err) {
+      console.log(err);
+    }
+  }
+
+  changeTanX(tanX:number) {
+    try {
+      let tangent = evaluate(this.state.derivative,{x:tanX}) + 'x + ' + (evaluate(this.state.fn,{x:tanX}) - evaluate(this.state.derivative,{x:tanX})*tanX);
+      let newScatter = [];
+      for(let i:number = 0; i < this.props.ticks; i++) {
+
+        let curX = this.props.startX + i*this.state.increment;
+        let curY;
+        if (curX < tanX) {
+          curY = evaluate(this.state.fn,{x:curX});
+        }
+        else {
+          curY = evaluate(tangent,{x:curX});
+        }
+        newScatter.push([curX,curY]);
+      }
+      let newState = Object.assign({}, this.state); 
+      newState.tangent = tangent;
+      newState.tangentX = tanX;
+      newState.options.data[0].points = newScatter;
+      newState.options.data[1].points = [[tanX, evaluate(tangent,{x:tanX})]]
+      this.setState(newState);
+      functionPlot(this.state.options);
+    }
+    catch(e) {
+      console.log(e);
+    }
+  }
+
+  turnOn() {
+    let newState = Object.assign({}, this.state); 
+    if (evaluate(this.props.derivative,{x:this.state.tangentX}) === 0) {
+      newState.tangent = String((evaluate(this.state.fn,{x:this.state.tangentX}) - evaluate(this.state.derivative,{x:this.state.tangentX})*this.state.tangentX));
+    }
+    newState.options.data[1].points = [[this.state.tangentX,evaluate(this.state.fn,{x:this.state.tangentX})]];
+    newState.on = true;
+    newState.tick++;
+    this.setState(newState);
+    functionPlot(this.state.options);
+    requestAnimationFrame(this.update.bind(this));
+    // From https://stackoverflow.com/questions/4011793/this-is-undefined-in-javascript-class-methods
+  
+  }
+
+  turnOff() {
+    let newState = Object.assign({}, this.state);     
+    newState.on = false;
+    this.setState(newState);
+  }
+
+  update() {
+    if (this.state.on) {
+      let newState = Object.assign({}, this.state);     
+      if (this.state.tick < this.props.ticks) {
+        let curX = this.props.startX + (this.state.increment*this.state.tick);
+        console.log(curX);
+        let curY;
+        console.log(evaluate(this.state.tangent,{x:curX}));
+        if (curX > this.state.tangentX) {
+          console.log(evaluate(this.state.tangent,{x:curX}));
+          curY = evaluate(this.state.tangent,{x:curX});
+        }
+        else {
+          curY = evaluate(this.state.fn,{x:curX});
+        }
+        newState.options.data[0].points.push([curX,curY]);
+        newState.tick+=1;
+        console.log(this.state.tangent);
+        this.setState(newState);
+        //console.log(this.state.options.data[0].points.length)
+        functionPlot(this.state.options);
+        //console.log(this.state.options.data[0].points.length)
+        requestAnimationFrame(this.update.bind(this));
+      }
+      else {
+        newState.on = false;
+        this.setState(newState);
+      }
+    }
+  }
+
+  render() {
+    return(
+    <div>
+      <div id={this.props.graphRoot}></div>
+      <input type={'text'} onChange= {(event) => this.changeFn(event.target.value)} defaultValue={'sin(x)'}></input>
+      <input type={'range'} onChange= {(event) => this.changeTanX(parseFloat(event.target.value))} defaultValue={0} min={this.props.startX} max={this.props.endX} step={this.state.increment}></input>
+    </div>
+    )
+  }
+
+}
+
 
 
 ReactDOM.render(
