@@ -15,6 +15,7 @@ let aGraphRoot = 'agraph';
 let riseRoot1 = 'riseroot1';
 let riseRoot2 = 'riseroot2';
 let ballGraph = 'ballshaha';
+let ballSecantGraph = 'funnyballshaha2';
 
 let riseRunOptions1 = {
   target: '#' + riseRoot1,
@@ -152,6 +153,47 @@ let ballOptions = {
 
   ]
 }
+
+let ballSecantOptions = {
+  target: '#'+ballSecantGraph,
+  grid: true,
+  width: 800,
+  height: 500,
+  data: [
+    { // ball line
+      points: [
+
+      ],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'points' as 'points',
+    },
+    { 
+      points: [ // Secant indication point
+
+      ],
+      graphType: 'scatter' as 'scatter',
+      fnType: 'points' as 'points',
+    },
+    {
+      fn: 'cos(x)',
+      skipTip: true,
+      nSamples: 100,
+      graphType: 'scatter' as 'scatter',
+      secants: [
+
+      ]
+    },
+    {
+      points: [ // Tiny LIne
+
+      ],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'points' as 'points',
+    }
+
+  ]
+}
+
 
 // Number Rounding function
 function round(number:number) {
@@ -745,7 +787,10 @@ class BallFunction extends React.Component<ballProps, ballState> {
           curY = evaluate(this.state.fn,{x:curX});
         }
         else {
+          curX = 100000; // Arbitrarily far, todo?: Not just arbitrarily far?
           curY = evaluate(tangent,{x:curX});
+          newScatter.push([curX,curY]);
+          break;
         }
         newScatter.push([curX,curY]);
       }
@@ -818,8 +863,8 @@ class BallFunction extends React.Component<ballProps, ballState> {
     return(
     <div>
       <div id={this.props.graphRoot}></div>
-      <input type={'text'} onChange= {(event) => this.changeFn(event.target.value)} defaultValue={'sin(x)'}></input>
-      <input type={'range'} onChange= {(event) => this.changeTanX(parseFloat(event.target.value))} defaultValue={0} min={this.props.startX} max={this.props.endX} step={this.state.increment}></input>
+      <input type={'text'} onChange= {(event) => this.changeFn(event.target.value)} defaultValue={this.props.fn}></input>
+      <input type={'range'} onChange= {(event) => this.changeTanX(parseFloat(event.target.value))} defaultValue={this.props.tangentX} min={this.props.startX} max={this.props.endX} step={this.state.increment}></input>
     </div>
     )
   }
@@ -827,7 +872,7 @@ class BallFunction extends React.Component<ballProps, ballState> {
 }
 
 
-class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecant> {
+class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecant> { //TODO: Initial graphing stuff so you dont have to pull on a knob to get something done (AKA Story of my Life)
 
   public state:ballStateSecant = {
     fn: this.props.fn,
@@ -904,11 +949,36 @@ class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecan
       newState.tangentX = tanX;
       newState.options.data[0].points = newScatter;
       newState.options.data[1].points = [[tanX, evaluate(tangent,{x:tanX})]]
+      let point1 = [newState.tangentX-newState.secantDist, evaluate(newState.fn,{x:newState.tangentX-newState.secantDist})];
+      let point2 = [newState.tangentX+newState.secantDist, evaluate(newState.fn,{x:newState.tangentX+newState.secantDist})];
+      newState.options.data[3].points = [];
+      newState.options.data[3].points.push(point1);
+      newState.options.data[3].points.push(point2);
+      newState.options.data[2].secants = [{x0: point1[0], x1: point2[0]}];
+
       this.setState(newState);
       functionPlot(this.state.options);
     }
     catch(e) {
       console.log(e);
+    }
+  }
+
+  changeSecantDist(newDist:number) {
+    try {
+      let newState = Object.assign({}, this.state); 
+      newState.secantDist = newDist;
+      let point1 = [newState.tangentX-newDist, evaluate(newState.fn,{x:newState.tangentX-newDist})];
+      let point2 = [newState.tangentX+newDist, evaluate(newState.fn,{x:newState.tangentX+newDist})];
+      newState.options.data[3].points = [];
+      newState.options.data[3].points.push(point1);
+      newState.options.data[3].points.push(point2);
+      newState.options.data[2].secants = [{x0: point1[0], x1: point2[0]}];
+      this.setState(newState);
+      functionPlot(this.state.options);
+    }
+    catch(er) {
+      console.log(er);
     }
   }
 
@@ -968,8 +1038,9 @@ class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecan
     return(
     <div>
       <div id={this.props.graphRoot}></div>
-      <input type={'text'} onChange= {(event) => this.changeFn(event.target.value)} defaultValue={'sin(x)'}></input>
+      <input type={'text'} onChange= {(event) => this.changeFn(event.target.value)} defaultValue={this.props.fn}></input>
       <input type={'range'} onChange= {(event) => this.changeTanX(parseFloat(event.target.value))} defaultValue={0} min={this.props.startX} max={this.props.endX} step={this.state.increment}></input>
+      <input type={'range'} onChange= {(event) => this.changeSecantDist(parseFloat(event.target.value))} defaultValue={this.props.secantDist} min={0.1} max={5} step={0.1}></input>
     </div>
     )
   }
@@ -1002,21 +1073,23 @@ ReactDOM.render(
     <p> We can see this geometrically. We can imagine the function like a ball on a string, tracking the function. If the string is cut, the ball should move in a straight line in the same direction it was moving right before the string was cut.</p>
     <BallFunction fn={"sin(x)"} derivative={'cos(x)'} options={ballOptions} startX = {-10} tangentX = {Math.PI/2} endX = {10} ticks = {500} graphRoot={ballGraph}></BallFunction>
     <p> If we want to find the line the ball should go in at any point, using a line between two points will not really work because the line of the ball only intersects the function at one point, right when the string is cut. </p>
-    <p> We can see something though. The closer the two points get to each other, the closer their line is to the real path of our hypothetical ball. </p>
-    <p> Maybe we can just make the two points the same one! That would solve the issue of having two points represent a line with one intersection. </p>
+    <BallFunctionSecant fn={'cos(x)'} derivative='-sin(x)' secantDist={5} options={ballSecantOptions} startX={-10} endX = {10} tangentX={Math.PI/2} ticks={500} graphRoot={ballSecantGraph}></BallFunctionSecant>
+    <p> If we zoom in close enough on any of the two point lines, we'll see that they don't exactly mirror their one point counterparts. They are always a little bit higher or lower, or have a different slope. This is a fundamental property of these two point lines, which are called secants. They will never quite match the one point lines, or tangents.</p>
+    <p> They can get really close to each other though! The closer the two points get to each other (and the point for the tangent), the closer their line is to the real path of our hypothetical ball. </p>
+    <p> Lets take this pattern we notice to its conclusion. What if we just had 0 distance between the points? That would solve the issue of having two points represent a line with one intersection. </p>
     <TeX className="math" math="\frac{1-1}{1-1} = \frac{0}{0}" block/>
-    <p> Oh! If the two points are the same, we’ll always have to divide by zero. Maybe we could graph the calculated slope at each point?</p>
+    <p> If there is 0 distance between the points, they'll just be the same, and we’ll always have to divide by zero. Lets do a little algebra and see if we can represent how the slope of the line changes based on the distance between the two points. </p>
     <p> Our normal slope equation is: </p>
     <TeX className="math" math="\frac{y_2 - y_1}{x_2 - x_1}" block/>
-    <p> We can rewrite this to an equation based on one point and how far away the second point is with some function notation. </p>
-    <p> We know that:  <TeX className="math" math="y_2 = f(x_2)"/> and  <TeX className="math" math="y_1 = f(x_1)"/> </p>
-    <p> We can define h to be the difference between the two Xs, or <TeX className="math" math="h = x_2 - x_1"/></p>
-    <p> When we replace the Ys with our new function notation, and the bottom difference with our new variable h, we end up with this equation: </p>
+    <p> We want to turn this into an equation with just two variables. The point, and the distance between it and the second point.  </p>
+    <p> First, lets do some easy substitution. We know that:  <TeX className="math" math="y_2 = f(x_2)"/> and  <TeX className="math" math="y_1 = f(x_1)"/> We can remove the two y variables just by making this substitution.</p>
+    <p> Next, lets just define the distance between the two x's to be h. That gets rid of another variable. <TeX className="math" math="h = x_2 - x_1"/></p>
+    <p> After we replace the Ys with our new function notation, and the bottom difference with our new variable h, we end up with this equation: </p>
     <TeX className="math" math="\frac{f(x_2) - f(x_1)}{h}" block/>
-    <p> We still want only one point, so lets rewrite the first x. If we add <TeX className="math" math="x_1"/> to each side of the definition of h: <TeX className="math" math="x_2 = h + x_1"/> </p>
-    <p> Once we replace <TeX className="math" math="x_2"/> , our new equation is: </p>
+    <p> We still want only one point, so lets rewrite the first term of the function notation. x2 is just x1 + h (the distance between the two points). We can do this algebraically as well if we add  <TeX className="math" math="x_1"/> to each side of the definition of h: <TeX className="math" math="x_2 = h + x_1"/> </p>
+    <p> Once we substitute <TeX className="math" math="x_2"/> , our new equation is: </p>
     <TeX className="math" math="\frac{f(x_1+h) - f(x_1)}{h}" block/>
-    <p> As we can see, x1 + x2 - x1 is just equal to x2, so this equation simplifies down to our same slope equation, but with function notation instead of Ys</p>
+    <p> </p>
     <p> Lets graph this for x=2 in x^2. If we do a little math: </p>
     <TeX className="math" math="\frac{f(2+h)-f(2)}{h} = \frac{h^2+4h+4 - 4}{h}" block/>
     <p> We need to remember that this means there is a discontinuity here, at h=0, but we can cut out the h. </p>
@@ -1051,6 +1124,7 @@ functionPlot(aOptions);
 functionPlot(riseRunOptions1);
 functionPlot(riseRunOptions2);
 functionPlot(ballOptions);
+functionPlot(ballSecantOptions);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
