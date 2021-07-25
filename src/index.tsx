@@ -16,6 +16,7 @@ let riseRoot1 = 'riseroot1';
 let riseRoot2 = 'riseroot2';
 let ballGraph = 'ballshaha';
 let ballSecantGraph = 'funnyballshaha2';
+let BasicDiscontinuityID = 'discontinuity1';
 
 let riseRunOptions1 = {
   target: '#' + riseRoot1,
@@ -251,6 +252,12 @@ interface ballPropsSecant {
   tangentX: number,
   endX: number,
   ticks: number,
+  graphRoot: string,
+}
+
+interface discontinuityGraph {
+  fn: string,
+  discontinuity: number,
   graphRoot: string,
 }
 
@@ -1048,6 +1055,45 @@ class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecan
 }
 
 
+class BasicDiscontinuityGraph extends React.Component<discontinuityGraph> {
+  componentDidMount() {
+    let options = {
+      target: '#' + this.props.graphRoot,
+      grid: true,
+      width: 800,
+      height: 500,
+      data: [
+        { // function
+          fn: this.props.fn,
+          color: 'steelblue',
+        },
+        {
+          points: [
+            [this.props.discontinuity as number ,evaluate(this.props.fn,{x:this.props.discontinuity}) as number]
+          ],
+          graphType: 'scatter' as 'scatter',
+          fnType: 'points' as 'points',
+          color: '#f7022a',
+        }
+      ]
+    }
+    
+
+    functionPlot(options);
+  }
+
+  render() {
+    return(
+      <div id={this.props.graphRoot}>
+      </div>
+    )
+  }
+}
+
+
+
+
+
 
 ReactDOM.render(
   <div>
@@ -1089,12 +1135,17 @@ ReactDOM.render(
     <p> We still want only one point, so lets rewrite the first term of the function notation. x2 is just x1 + h (the distance between the two points). We can do this algebraically as well if we add  <TeX className="math" math="x_1"/> to each side of the definition of h: <TeX className="math" math="x_2 = h + x_1"/> </p>
     <p> Once we substitute <TeX className="math" math="x_2"/> , our new equation is: </p>
     <TeX className="math" math="\frac{f(x_1+h) - f(x_1)}{h}" block/>
-    <p> </p>
-    <p> Lets graph this for x=2 in x^2. If we do a little math: </p>
-    <TeX className="math" math="\frac{f(2+h)-f(2)}{h} = \frac{h^2+4h+4 - 4}{h}" block/>
-    <p> We need to remember that this means there is a discontinuity here, at h=0, but we can cut out the h. </p>
+    <p> This is exactly what we wanted! An equation with one x variable and one variable for the distance between the two points.</p>
+    <p> Now that we have it, lets try it for some point and function. Lets try <TeX className="math" math="x=2"/> in the function <TeX className="math" math="f(x) = x^2"/>.</p>
+    <p> Lets start out by substituting what we just said would be our example, <TeX className="math" math="x=2"/> and <TeX className="math" math="f(x) = x^2"/>, then do just a bit of algebra.</p>
+    <TeX className="math" math="\frac{f(2+h)-f(2)}{h} = \frac{(h+2)^2 - 2^2}{h} = \frac{h^2+4h+4 - 4}{h}" block/>
+    <p> The fours cancel out, and we are left with: </p>
+    <TeX className="math" math="\frac{h^2+4h}{h}" block/>
+    <p> Looking at this equation we can see that it is a pretty typical rational equation, dividing by the variable. This means there will always be a removable discontinuity at h = 0, because we can't divide by 0.</p>
+    <p> Happily, though, we can cancel out the h!</p>
     <TeX className="math" math="\frac{h^2+4h}{h} = h+4" block/>
-    <p> This is the equation for the calculated slope of x^2 based on how far away the points are. We can graph it with the discontinuity: </p>
+    <p> This is the equation for the calculated slope of <TeX className="math" math="f(x) = x^2  \; at \; x=2"/> based on how far away the second point is. We can graph it with the discontinuity: </p>
+    <BasicDiscontinuityGraph fn={"x+4"} graphRoot={"discontinuity1"} discontinuity={0}></BasicDiscontinuityGraph>
     <p> Wait. Now that we have graphed it, does this remind us of anything? If we have any experience with discontinuities, we know how to find the value of x=0! We take the limit! </p>
     <p> The value at the point is just the limit of this equation, h+4, as h (the distance between points) goes to 0. We find out that the slope is 4, which is exactly the line our ball follows! </p>
     <p> So, the full equation would be: </p>
