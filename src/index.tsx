@@ -195,6 +195,52 @@ let ballSecantOptions = {
   ]
 }
 
+let basicOptions = {
+  target: '#basicGraph',
+  grid: true,
+  width: 800,
+  height: 500,
+  data: [
+    {
+      points: [
+
+      ] as number[][],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'points' as 'points',
+    },
+    { // h vector
+      vector: [1,0],
+      offset: [3,8],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'vector' as 'vector',
+    },
+    { // f(x+h) - f(x) vector
+      vector: [0, 4],
+      offset: [4, 8],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'vector' as 'vector',
+    },
+
+  ]
+}
+
+let increment = 20/500;
+let bigArray = [];
+for(let i:number = 0; i < 500; i++) {
+
+  let curX = -10 + i*increment;
+  let curY;
+  if (curX < 2) {
+    curY = evaluate('x^2',{x:curX}) as number;
+  }
+  else {
+    curY = evaluate('4x-4',{x:curX});
+  }
+  let array = [curX,curY] as number[];
+  bigArray.push(array);
+}
+basicOptions.data[0].points = bigArray;
+
 
 // Number Rounding function
 function round(number:number) {
@@ -253,6 +299,10 @@ interface ballPropsSecant {
   endX: number,
   ticks: number,
   graphRoot: string,
+}
+
+interface basicProps {
+  options: any,
 }
 
 interface discontinuityGraph {
@@ -328,6 +378,11 @@ class AGraph extends React.Component<aGraphProps> {
     graphRoot: this.props.graphRoot,
     options: this.props.options,
   }
+
+  componentDidMount() {
+    functionPlot(aOptions);
+  }
+
 
 
 
@@ -456,6 +511,9 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
     options: this.props.options,
   }
 
+  componentDidMount() {
+    functionPlot(hOptions);
+  }
 
 
 
@@ -577,6 +635,11 @@ class RiseRunStatic extends React.Component<riseRunProps> {
     options: this.props.options
   }
 
+  componentDidMount() {
+    functionPlot(riseRunOptions1);
+  }
+
+
   changeX2(x: number) {
     let fn = this.state.fn;
     let x1 = this.state.x1;
@@ -641,6 +704,11 @@ class RiseRunAntiStatic extends React.Component<riseRunProps> {
     x1: this.props.x1,
     options: this.props.options
   }
+
+  componentDidMount() {
+    functionPlot(riseRunOptions2);
+  }
+
 
   changeFn(fn: string) {
     try {
@@ -739,6 +807,11 @@ class BallFunction extends React.Component<ballProps, ballState> {
     on: false,
     increment: Math.abs(this.props.endX - this.props.startX)/this.props.ticks,
   }
+
+  componentDidMount() {
+    functionPlot(ballOptions);
+  }
+
   
   handleToggle() { // Deprecated cuz I made something better
     if(this.state.on === false) {
@@ -891,6 +964,10 @@ class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecan
     tick: 0,
     on: false,
     increment: Math.abs(this.props.endX - this.props.startX)/this.props.ticks,
+  }
+
+  componentDidMount() {
+    functionPlot(ballSecantOptions);
   }
   
   handleToggle() {
@@ -1069,7 +1146,7 @@ class BasicDiscontinuityGraph extends React.Component<discontinuityGraph> {
         },
         {
           points: [
-            [this.props.discontinuity as number ,evaluate(this.props.fn,{x:this.props.discontinuity}) as number]
+            [this.props.discontinuity as number, evaluate(this.props.fn,{x:this.props.discontinuity}) as number]
           ],
           graphType: 'scatter' as 'scatter',
           fnType: 'points' as 'points',
@@ -1090,6 +1167,20 @@ class BasicDiscontinuityGraph extends React.Component<discontinuityGraph> {
   }
 }
 
+class BasicGraph extends React.Component<basicProps> {
+
+  componentDidMount() {
+    functionPlot(this.props.options);
+  }
+
+  render() {
+    return( // .slice() is to remove the # as the first bit
+      <div id={this.props.options.target.slice(1)}>
+      </div>
+    )
+  }
+
+}
 
 
 
@@ -1121,7 +1212,7 @@ ReactDOM.render(
     <p> If we want to find the line the ball should go in at any point, using a line between two points will not really work because the line of the ball only intersects the function at one point, right when the string is cut. </p>
     <BallFunctionSecant fn={'cos(x)'} derivative='-sin(x)' secantDist={5} options={ballSecantOptions} startX={-10} endX = {10} tangentX={Math.PI/2} ticks={500} graphRoot={ballSecantGraph}></BallFunctionSecant>
     <p> If we zoom in close enough on any of the two point lines, we'll see that they don't exactly mirror their one point counterparts. They are always a little bit higher or lower, or have a different slope. This is a fundamental property of these two point lines, which are called secants. They will never quite match the one point lines, or tangents.</p>
-    <p> They can get really close to each other though! The closer the two points get to each other (and the point for the tangent), the closer their line is to the real path of our hypothetical ball. </p>
+    <p> The closer the two points get to each other (and the point for the tangent), the closer their line is to the real path of our hypothetical ball. </p>
     <p> Lets take this pattern we notice to its conclusion. What if we just had 0 distance between the points? That would solve the issue of having two points represent a line with one intersection. </p>
     <TeX className="math" math="\frac{1-1}{1-1} = \frac{0}{0}" block/>
     <p> If there is 0 distance between the points, they'll just be the same, and we’ll always have to divide by zero. Lets do a little algebra and see if we can represent how the slope of the line changes based on the distance between the two points. </p>
@@ -1146,8 +1237,9 @@ ReactDOM.render(
     <TeX className="math" math="\frac{h^2+4h}{h} = h+4" block/>
     <p> This is the equation for the calculated slope of <TeX className="math" math="f(x) = x^2  \; at \; x=2"/> based on how far away the second point is. We can graph it with the discontinuity: </p>
     <BasicDiscontinuityGraph fn={"x+4"} graphRoot={"discontinuity1"} discontinuity={0}></BasicDiscontinuityGraph>
-    <p> Wait. Now that we have graphed it, does this remind us of anything? If we have any experience with discontinuities, we know how to find the value of x=0! We take the limit! </p>
-    <p> The value at the point is just the limit of this equation, h+4, as h (the distance between points) goes to 0. We find out that the slope is 4, which is exactly the line our ball follows! </p>
+    <p> Wait. Now that we have graphed it, does this remind us of anything? If we have any experience with discontinuities, we know how to find the what the value of x=0 would be without the discontinuity. We take the limit! </p>
+    <p> The expected value at the point is just the limit of this equation, h+4, as h (the distance between points) goes to 0. We find out that the slope is 4, which is exactly the line our ball follows! </p>
+    <BasicGraph options={basicOptions}></BasicGraph>
     <p> So, the full equation would be: </p>
     <TeX className="math" math="\lim_{h \to 0} \frac{f(x+h) - f(x)}{h}" block/>
     <p> This is the limit definition of the derivative. </p> 
@@ -1170,14 +1262,18 @@ ReactDOM.render(
   </div>,
   document.getElementById('root')
 );
+
+/*
+
 functionPlot(hOptions); // Ideally we would get the initial call inside the class, but idk how
 functionPlot(aOptions);
 functionPlot(riseRunOptions1);
 functionPlot(riseRunOptions2);
 functionPlot(ballOptions);
 functionPlot(ballSecantOptions);
+*/
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+reportWebVitals(console.log);
