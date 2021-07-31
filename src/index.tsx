@@ -16,7 +16,6 @@ let riseRoot1 = 'riseroot1';
 let riseRoot2 = 'riseroot2';
 let ballGraph = 'ballshaha';
 let ballSecantGraph = 'funnyballshaha2';
-let BasicDiscontinuityID = 'discontinuity1';
 
 let riseRunOptions1 = {
   target: '#' + riseRoot1,
@@ -552,7 +551,7 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
     let x = this.state.x;
     let fn = this.state.fn;
     let newState = Object.assign({}, this.state); // React does NOT like you mutating the state directly so I have to do this copying monstrosity from SO: https://stackoverflow.com/questions/45557301/how-to-change-the-state-with-react-typescript-2-0
-    let rise = evaluate(fn,{x:x+h}) - evaluate(fn,{x:x}); // y1 - y2 convenience var
+    let rise = evaluate(fn,{x:(x+h)}) - evaluate(fn,{x:x}); // y1 - y2 convenience var
 
     // this.state is decapitated from the namespace here for readability and convenience
 
@@ -577,7 +576,7 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
     let h = this.state.h;
     let fn = this.state.fn;
     let newState = Object.assign({}, this.state); // React does NOT like you mutating the state directly so I have to do this copying monstrosity from SO: https://stackoverflow.com/questions/45557301/how-to-change-the-state-with-react-typescript-2-0
-    let rise = evaluate(fn,{x:x+h}) - evaluate(fn,{x:x}); // y1 - y2 convenience var
+    let rise = evaluate(fn,{x:(x+h)}) - evaluate(fn,{x:x}); // y1 - y2 convenience var
     // Again this.state is decapitated from the namespace here for readability and convenience
 
 
@@ -596,25 +595,26 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
 
     functionPlot(this.state.options);
   }
+//       <TeX className="math" math={"m_calculated \\: = \\:" + round(this.state.slope) + "\\: = \\frac{ \\color{#4682b4}" + round(evaluate(this.state.fn,{x:this.state.x+h})) + "\\: color{#000} - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x})) + "}{" + this.state.h  + "} \\: ~ \\: m_true \\: = \\: " + this.state.trueSlope} block/>
 
   render() {
+    let mathString = String("m_{calculated} \\: = \\:" + round(this.state.slope) + "\\: = \\frac{\\color{#4682b4}" + round(evaluate(this.state.fn,{x:(this.state.x+this.state.h)})) + "\\color{#000} - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x})) + "\\color{#000}}{\\color{#bd3c4b}" + this.state.h  + "} \\: ~ \\: m_{true} \\: = \\: " + this.state.trueSlope);
     return(
       <div id ="container">
       <div id = {this.state.graphRoot} onLoad={() => functionPlot(this.state.options)}></div>
       <div id = "inputs">
       <div id="slopes">
-      <h2 id = "calcslope"> {"Calculated Slope: " + round(this.state.slope)} </h2>
-      <h2 id = "trueslope"> {"True Slope: " + round(this.state.trueSlope)} </h2> 
+      <TeX className="math" math={mathString} block/>
       </div>
       <div id="sliders">
       <div className = "barVal">
       <h3 id = "hlabel"> {"h: " + this.state.h} </h3>
-      <input type="range" id ="hslider" name = "h" min="0.01" max="10" step="0.01" defaultValue = {this.props.h} onChange={(event) => this.changeH(parseFloat(event.target.value))}>
+      <input type="range" id ="hslider" name = "h" min="0.1" max="10" step="0.1" defaultValue = {this.props.h} onChange={(event) => this.changeH(parseFloat(event.target.value))}>
       </input>
       </div>
       <div className = "barVal">
       <h3 id = "xlabel"> {"x: " + this.state.x} </h3>
-      <input type = "range" id="xslider" name = "x" min = "-10" max = "10" step ="0.01" defaultValue = {this.props.x} onChange={(event) => this.changeX(parseFloat(event.target.value))}></input>
+      <input type = "range" id="xslider" name = "x" min = "-10" max = "10" step ="0.1" defaultValue = {this.props.x} onChange={(event) => this.changeX(parseFloat(event.target.value))}></input>
       </div>
       </div>
       <input type="text" id="editing" defaultValue = {this.props.fn} onChange={(event) => this.changeFn(event.target.value)}>
@@ -859,21 +859,24 @@ class BallFunction extends React.Component<ballProps, ballState> {
     try {
       let tangent = evaluate(this.state.derivative,{x:tanX}) + 'x + ' + (evaluate(this.state.fn,{x:tanX}) - evaluate(this.state.derivative,{x:tanX})*tanX);
       let newScatter = [];
+      let curX;
+      let curY;
       for(let i:number = 0; i < this.props.ticks; i++) {
 
         let curX = this.props.startX + i*this.state.increment;
-        let curY;
         if (curX < tanX) {
           curY = evaluate(this.state.fn,{x:curX});
         }
         else {
-          curX = 100000; // Arbitrarily far, todo?: Not just arbitrarily far?
-          curY = evaluate(tangent,{x:curX});
-          newScatter.push([curX,curY]);
           break;
         }
         newScatter.push([curX,curY]);
       }
+      curX = 100000; // Arbitrarily far, todo?: Not just arbitrarily far?
+      curY = evaluate(tangent,{x:curX});
+      newScatter.push([curX,curY]);
+
+
       let newState = Object.assign({}, this.state); 
       newState.tangent = tangent;
       newState.tangentX = tanX;
@@ -1016,18 +1019,23 @@ class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecan
     try {
       let tangent = evaluate(this.state.derivative,{x:tanX}) + 'x + ' + (evaluate(this.state.fn,{x:tanX}) - evaluate(this.state.derivative,{x:tanX})*tanX);
       let newScatter = [];
+      let curX, curY;
       for(let i:number = 0; i < this.props.ticks; i++) {
 
         let curX = this.props.startX + i*this.state.increment;
-        let curY;
         if (curX < tanX) {
           curY = evaluate(this.state.fn,{x:curX});
         }
         else {
-          curY = evaluate(tangent,{x:curX});
+          break;
         }
         newScatter.push([curX,curY]);
       }
+      curX = 100000; // Arbitrarily far, todo?: Not just arbitrarily far?
+      curY = evaluate(tangent,{x:curX});
+      newScatter.push([curX,curY]);
+
+
       let newState = Object.assign({}, this.state); 
       newState.tangent = tangent;
       newState.tangentX = tanX;
@@ -1220,10 +1228,10 @@ ReactDOM.render(
     <TeX className="math" math="\frac{y_2 - y_1}{x_2 - x_1}" block/>
     <p> We want to turn this into an equation with just two variables. The point, and the distance between it and the second point.  </p>
     <p> First, lets do some easy substitution. We know that:  <TeX className="math" math="y_2 = f(x_2)"/> and  <TeX className="math" math="y_1 = f(x_1)"/> We can remove the two y variables just by making this substitution.</p>
-    <p> Next, lets just define the distance between the two x's to be h. That gets rid of another variable. <TeX className="math" math="h = x_2 - x_1"/></p>
+    <p> Next, lets just define the distance between the two x's to be h. That gets rid of another variable. <TeX className="math" math="h = x_2 - x_1" block/></p>
     <p> After we replace the Ys with our new function notation, and the bottom difference with our new variable h, we end up with this equation: </p>
     <TeX className="math" math="\frac{f(x_2) - f(x_1)}{h}" block/>
-    <p> We still want only one point, so lets rewrite the first term of the function notation. x2 is just x1 + h (the distance between the two points). We can do this algebraically as well if we add  <TeX className="math" math="x_1"/> to each side of the definition of h: <TeX className="math" math="x_2 = h + x_1"/> </p>
+    <p> We still want only one point, so lets rewrite the first term of the function notation. x2 is just x1 + h (the distance between the two points). We can do this algebraically as well if we add  <TeX className="math" math="x_1"/> to each side of the definition of h: <TeX className="math" math="x_2 = h + x_1" block /> </p>
     <p> Once we substitute <TeX className="math" math="x_2"/> , our new equation is: </p>
     <TeX className="math" math="\frac{f(x_1+h) - f(x_1)}{h}" block/>
     <p> This is exactly what we wanted! An equation with one x variable and one variable for the distance between the two points.</p>
@@ -1240,9 +1248,15 @@ ReactDOM.render(
     <p> Wait. Now that we have graphed it, does this remind us of anything? If we have any experience with discontinuities, we know how to find the what the value of x=0 would be without the discontinuity. We take the limit! </p>
     <p> The expected value at the point is just the limit of this equation, h+4, as h (the distance between points) goes to 0. We find out that the slope is 4, which is exactly the line our ball follows! </p>
     <BasicGraph options={basicOptions}></BasicGraph>
+    <TeX className="math" math="m \: = \: 4 = \:  \frac{\color{#4682b4} 12 \: \color{#000} - \: \color{#b47846} 8}{\color{#4682b4}3 \: \color{#000} - \: \color{#b47846} 2}" block/>
+    <p> This property isn't unique to x^2. For any function, as h gets closer to 0, we can see that our secant line approximates the true tangent more closely.</p>
+    <HGraph fn={"x^2"} h={5} x={0} graphRoot={graphRoot} options={hOptions}></HGraph>
+    <div className="keyTakeaway">
+    <h2 className="takeawaytitle"> Key Takeaway - Limit Definition of Derivative </h2>
     <p> So, the full equation would be: </p>
     <TeX className="math" math="\lim_{h \to 0} \frac{f(x+h) - f(x)}{h}" block/>
-    <p> This is the limit definition of the derivative. </p> 
+    <p> This is the limit definition of the derivative. </p>
+    </div>
     <p> Let’s summarize how we got here. We started off with our usual slope equation: </p>
     <TeX className="math" math="\frac{y_2 - y_1}{x_2 - x_1}" block/>
     <p> After playing around with it a little, we found that the closer the two points got to each other, the closer their line got to the line of our hypothetical ball. We realized that this approach wouldn’t really work to find the exact point because we would divide by zero when the points became the same. However, when we graphed the function of the slope, we could see that this division by zero was really just a removable discontinuity! </p> 
