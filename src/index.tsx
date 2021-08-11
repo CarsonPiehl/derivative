@@ -598,7 +598,7 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
 //       <TeX className="math" math={"m_calculated \\: = \\:" + round(this.state.slope) + "\\: = \\frac{ \\color{#4682b4}" + round(evaluate(this.state.fn,{x:this.state.x+h})) + "\\: color{#000} - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x})) + "}{" + this.state.h  + "} \\: ~ \\: m_true \\: = \\: " + this.state.trueSlope} block/>
 
   render() {
-    let mathString = String("m_{calculated} \\: = \\:" + round(this.state.slope) + "\\: = \\frac{\\color{#4682b4}" + round(evaluate(this.state.fn,{x:(this.state.x+this.state.h)})) + "\\color{#000} - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x})) + "\\color{#000}}{\\color{#bd3c4b}" + this.state.h  + "} \\: ~ \\: m_{true} \\: = \\: " + this.state.trueSlope);
+    let mathString = String("m_{calculated} \\: = \\:" + round(this.state.slope) + "\\: = \\frac{\\color{#4682b4}" + round(evaluate(this.state.fn,{x:(this.state.x+this.state.h)})) + "\\color{#000} - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x})) + "\\color{#000}}{\\color{#bd3c4b}" + this.state.h  + "} \\: ~ \\: m_{true} \\: = \\: " + round(this.state.trueSlope));
     return(
       <div id ="container">
       <div id = {this.state.graphRoot} onLoad={() => functionPlot(this.state.options)}></div>
@@ -609,7 +609,7 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
       <div id="sliders">
       <div className = "barVal">
       <h3 id = "hlabel"> {"h: " + this.state.h} </h3>
-      <input type="range" id ="hslider" name = "h" min="0.1" max="10" step="0.1" defaultValue = {this.props.h} onChange={(event) => this.changeH(parseFloat(event.target.value))}>
+      <input type="range" id ="hslider" name = "h" min="0.01" max="10" step="0.1" defaultValue = {this.props.h} onChange={(event) => this.changeH(parseFloat(event.target.value))}>
       </input>
       </div>
       <div className = "barVal">
