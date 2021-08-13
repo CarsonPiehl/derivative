@@ -14,8 +14,9 @@ let graphRoot = 'hgraph';
 let aGraphRoot = 'agraph';
 let riseRoot1 = 'riseroot1';
 let riseRoot2 = 'riseroot2';
-let ballGraph = 'ballshaha';
-let ballSecantGraph = 'funnyballshaha2';
+let ballGraph = 'ball1';
+let ballSecantGraph = 'ballsecant1';
+let ballSecantGraph2 = 'ballsecant2';
 
 let riseRunOptions1 = {
   target: '#' + riseRoot1,
@@ -193,6 +194,47 @@ let ballSecantOptions = {
 
   ]
 }
+
+let ballSecantOptions2 = {
+  target: '#'+ballSecantGraph2,
+  grid: true,
+  width: 800,
+  height: 500,
+  data: [
+    { // ball line
+      points: [
+
+      ],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'points' as 'points',
+    },
+    { 
+      points: [ // Secant indication point
+
+      ],
+      graphType: 'scatter' as 'scatter',
+      fnType: 'points' as 'points',
+    },
+    {
+      fn: '3x^3 + 2x^2 + 3',
+      skipTip: true,
+      nSamples: 150,
+      graphType: 'scatter' as 'scatter',
+      secants: [
+
+      ]
+    },
+    {
+      points: [ // Tiny Line
+
+      ],
+      graphType: 'polyline' as 'polyline',
+      fnType: 'points' as 'points',
+    }
+
+  ]
+}
+
 
 let basicOptions = {
   target: '#basicGraph',
@@ -379,7 +421,7 @@ class AGraph extends React.Component<aGraphProps> {
   }
 
   componentDidMount() {
-    functionPlot(aOptions);
+    functionPlot(this.props.options);
   }
 
 
@@ -511,7 +553,7 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
   }
 
   componentDidMount() {
-    functionPlot(hOptions);
+    functionPlot(this.props.options);
   }
 
 
@@ -636,7 +678,7 @@ class RiseRunStatic extends React.Component<riseRunProps> {
   }
 
   componentDidMount() {
-    functionPlot(riseRunOptions1);
+    functionPlot(this.props.options);
   }
 
 
@@ -706,7 +748,7 @@ class RiseRunAntiStatic extends React.Component<riseRunProps> {
   }
 
   componentDidMount() {
-    functionPlot(riseRunOptions2);
+    functionPlot(this.props.options);
   }
 
 
@@ -809,7 +851,7 @@ class BallFunction extends React.Component<ballProps, ballState> {
   }
 
   componentDidMount() {
-    functionPlot(ballOptions);
+    functionPlot(this.props.options);
   }
 
   
@@ -970,7 +1012,7 @@ class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecan
   }
 
   componentDidMount() {
-    functionPlot(ballSecantOptions);
+    functionPlot(this.props.options);
   }
   
   handleToggle() {
@@ -1259,33 +1301,36 @@ ReactDOM.render(
     </div>
     <p> Let’s summarize how we got here. We started off with our usual slope equation: </p>
     <TeX className="math" math="\frac{y_2 - y_1}{x_2 - x_1}" block/>
-    <p> After playing around with it a little, we found that the closer the two points got to each other, the closer their line got to the line of our hypothetical ball. We realized that this approach wouldn’t really work to find the exact point because we would divide by zero when the points became the same. However, when we graphed the function of the slope, we could see that this division by zero was really just a removable discontinuity! </p> 
-    <p> Because of this, we could take the limit and find what the value normally would be, and made our derivative function! </p>
+    <p> After playing around with it a little, we found that the closer the two points got to each other, the closer their line got to the line of our hypothetical ball. </p>
+    <BallFunctionSecant fn={'3x^3 + 2x^2 + 3'} derivative='9x^2 + 4x' secantDist={5} options={ballSecantOptions2} startX={-10} endX = {10} tangentX={2} ticks={500} graphRoot={ballSecantGraph2}></BallFunctionSecant>
+    <p> We realized that this approach wouldn’t really work to find the exact point because we would divide by zero when the points became the same. However, when we graphed the function of the slope, we could see that this division by zero was really just a removable discontinuity! </p> 
+    <p> Because of this, we could take the limit to find what the value normally would be, and we created our derivative function! </p>
+    <div className="keyTakeaway">
+    <h2 className="takeawaytitle"> Key Takeaway - Limit Definition of Derivative </h2>
+    <TeX className="math" math="\lim_{h \to 0} \frac{f(x+h) - f(x)}{h}" block/>
+    </div>
     <p> Even though it looks a little complicated, its important to remember that the whole thing is just an excuse to push the two points as close together as possible. The limit, the function notation, all of it just helps us to push the points as close together as we can. </p>
     <p> So, what can we do with our new equation? </p> 
     <p> We can use it to find the slope at a specific point like we just did, but we can also use it to find a function. </p>
-    <p> If we substitute x as a variable instead of as a specific number, we can do a little algebra, and find the function for the slope for every point in the previous equation. Let’s do it for x^2. </p>
+    <p> If we substitute x as a variable instead of as a specific number, we can do a little algebra, and find the function for the slope for every point in the previous equation.</p>
+    <p> Let's try it for <TeX className="math" math = "f(x) = x^2"/></p>
     <TeX className="math" math="\lim_{h \to 0} \frac{f(x+h) - f(x)}{h}" block/>
-    <p> Let's take our original equation, then substitute a few things: </p>
+    <p> First we'll take our original equation, then substitute a few things: </p>
     <TeX className="math" math="\lim_{h \to 0} \: \frac{(x+h)^2 - x^2}{h}" block />
+    <p> Next we expand the squared parentheses: </p>
     <TeX className="math" math="\lim_{h \to 0} \: \frac{x^2 +2xh + h^2 - x^2}{h}" block />
+    <p> The postive and negative <TeX className="math" math = "f(x) = x^2"/> cancel each other out. </p>
     <TeX className="math" math="\lim_{h \to 0} \: \frac{2xh + h^2}{h}" block/>
+    <p> We can divide by h because each term in the numerator has an h, and we can cancel the h in each of them out.</p>
     <TeX className="math" math="\lim_{h \to 0} \: 2x + h" block/>
+    <p> Lastly, we just substitute 0 for h. Adding 0 to x does nothing, so we're just left with:</p>
     <TeX className="math" math="2x" block/>
-    <p> This equation fits with what we just did! @x=2 This equation gives us a slope of 4, which is exactly what we found. </p>
+    <p> This equation fits with what we just did! This equation gives us a slope of 4 when x=2, which is exactly what we found. </p>
   </div>,
   document.getElementById('root')
 );
 
-/*
 
-functionPlot(hOptions); // Ideally we would get the initial call inside the class, but idk how
-functionPlot(aOptions);
-functionPlot(riseRunOptions1);
-functionPlot(riseRunOptions2);
-functionPlot(ballOptions);
-functionPlot(ballSecantOptions);
-*/
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
