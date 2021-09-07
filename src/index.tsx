@@ -1276,21 +1276,23 @@ class BasicDiscontinuityGraph extends React.Component<discontinuityGraph> {
       grid: true,
       width: graphWidth,
       height: graphHeight,
+      disableZoom: true,
+      yAxis: {domain: [2, 8]},
+      xAxis: {domain: [-5, 5]}, 
       data: [
         { // function
           fn: this.props.fn,
           color: 'steelblue',
         },
         {
-          points: [
-            [this.props.discontinuity as number, evaluate(this.props.fn,{x:this.props.discontinuity}) as number]
-          ],
-          graphType: 'scatter' as 'scatter',
-          fnType: 'points' as 'points',
-          color: '#f7022a',
-        }
+          x: 'cos(t)/16',
+          y: 'sin(t)/16 + 4',
+          fnType: 'parametric',
+          graphType: 'polyline' as 'polyline',
+          color: 'steelblue',
+        },
       ]
-    }
+    } as any
     
 
     functionPlot(options);
