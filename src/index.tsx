@@ -1255,8 +1255,12 @@ class BallFunctionSecant extends React.Component<ballPropsSecant, ballStateSecan
       <div id={this.props.graphRoot}></div>
       <div className="sliders">
         <input type={'text'} onChange= {(event) => this.changeFn(event.target.value)} defaultValue={this.props.fn}></input>
+        <div className="slider">
         <input type={'range'} onChange= {(event) => this.changeTanX(parseFloat(event.target.value))} defaultValue={0} min={this.props.startX} max={this.props.endX} step={this.state.increment}></input>
+        </div>
+        <div className="slider">
         <input type={'range'} onChange= {(event) => this.changeSecantDist(parseFloat(event.target.value))} defaultValue={this.props.secantDist} min={0.1} max={5} step={0.1}></input>
+        </div>
       </div>
     </div>
     )
@@ -1348,7 +1352,9 @@ class TangentOverGraph extends React.Component<tangentOverGraphProps> {
         <div id={this.state.options.target.slice(1)}> </div>
         <TeX className="math" math={"m = \\color{steelblue} " + dX + " \\color{#000} = \\color{steelblue} " + dX.replace(/x/g, String(tanX)) + "\\color{#000} = " + round(evaluate(dX, {x:tanX})) + " = " + "\\frac{\\color{#05b378}" + String(round(evaluate(fn, {x:tanX}) + evaluate(dX, {x:tanX}))) + " - " + String(round(evaluate(fn, {x:tanX})))  + "\\color{#000}}{ \\color{red}" + String(round(tanX+1)) + " - " + String(round(tanX)) + "}" } block/>
         <div className = "sliders">
-        <input type="range" min={-10} max={10} step={.1} defaultValue={this.props.tangentX} onChange={(event) => this.changeTanX(parseFloat(event.target.value))}></input>
+          <div className= "slider">
+            <input type="range" min={-10} max={10} step={.1} defaultValue={this.props.tangentX} onChange={(event) => this.changeTanX(parseFloat(event.target.value))}></input>
+          </div>
         </div>
       </div>
 
