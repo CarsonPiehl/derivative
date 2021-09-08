@@ -53,6 +53,12 @@ p {
     font-family: 'Lato', sans-serif;
 }
 
+input[type=range] {
+  -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+  width: 100%; /* Specific width is required for Firefox. */
+  background: transparent; /* Otherwise white in Chrome */
+}
+
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     height: 18px;
@@ -92,6 +98,10 @@ input[type=range]::-webkit-slider-thumb {
     background: #7597b4;
     height: .5vh;
 
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
   }
   
   input[type=range]::-moz-range-track {
