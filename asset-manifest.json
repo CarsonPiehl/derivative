@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/derivative/static/css/main.9807d207.chunk.css",
+    "main.css": "/derivative/static/css/main.0ec30126.chunk.css",
     "main.js": "/derivative/static/js/main.04b9cd18.chunk.js",
     "main.js.map": "/derivative/static/js/main.04b9cd18.chunk.js.map",
     "runtime-main.js": "/derivative/static/js/runtime-main.953f98d3.js",
@@ -12,7 +12,7 @@
     "static/js/3.8e80775d.chunk.js.map": "/derivative/static/js/3.8e80775d.chunk.js.map",
     "index.html": "/derivative/index.html",
     "static/css/2.deee02bb.chunk.css.map": "/derivative/static/css/2.deee02bb.chunk.css.map",
-    "static/css/main.9807d207.chunk.css.map": "/derivative/static/css/main.9807d207.chunk.css.map",
+    "static/css/main.0ec30126.chunk.css.map": "/derivative/static/css/main.0ec30126.chunk.css.map",
     "static/js/2.0b291ffe.chunk.js.LICENSE.txt": "/derivative/static/js/2.0b291ffe.chunk.js.LICENSE.txt",
     "static/media/katex.min.css": "/derivative/static/media/KaTeX_Typewriter-Regular.b6a56b14.woff"
   },
@@ -20,7 +20,7 @@
     "static/js/runtime-main.953f98d3.js",
     "static/css/2.deee02bb.chunk.css",
     "static/js/2.0b291ffe.chunk.js",
-    "static/css/main.9807d207.chunk.css",
+    "static/css/main.0ec30126.chunk.css",
     "static/js/main.04b9cd18.chunk.js"
   ]
 }
