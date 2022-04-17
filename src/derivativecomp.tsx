@@ -33,7 +33,7 @@ let riseRunOptions1 = {
       fn: '2x',
       color: 'steelblue',
     },
-    { // x vector THIS IS ALL HARD TYPED. TODO: FIX
+    { // x vector THIS IS ALL HAND TYPED. TODO: FIX
       vector: [10,0],
       offset: [0,0],
       graphType: 'polyline' as 'polyline',
@@ -58,7 +58,7 @@ let riseRunOptions2 = {
       fn: 'x^2',
       color: 'steelblue',
     },
-    { // x vector THIS IS ALL HARD TYPED. TODO: FIX
+    { // x vector THIS IS ALL HAND TYPED. TODO: FIX
       vector: [2,0],
       offset: [0,0],
       graphType: 'polyline' as 'polyline',
@@ -364,8 +364,6 @@ function round(number:number) {
 
 
 
-// we really on some coding shit now. Interfaces mother fucker
-
 interface hGraphProps {
   fn: string,
   h: number,
@@ -538,7 +536,7 @@ class AGraph extends React.Component<aGraphProps> {
         newState.slope = rise / a-x;
         newState.trueSlope = evaluate(newState.derivative, {x:x});
 
-        this.setState(newState); // I trust daddy react implicitly about mutation but this seems convoluted. What do I know tho tbf, I'm a fucking monkey
+        this.setState(newState); // I trust  react implicitly about mutation but this seems convoluted. What do I know though?
       }
       functionPlot(this.state.options);
     }
@@ -668,7 +666,7 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
         newState.slope = rise / h;
         newState.trueSlope = evaluate(newState.derivative, {x:x});
 
-        this.setState(newState); // I trust daddy react implicitly about mutation but this seems convoluted. What do I know tho tbf, I'm a fucking monkey
+        this.setState(newState); // I trust React implicitly about mutation but this seems convoluted. What do I know though?
       }
       functionPlot(this.state.options);
     }
@@ -725,7 +723,6 @@ class HGraph extends React.Component<hGraphProps>  { // State is just props (but
 
     functionPlot(this.state.options);
   }
-//       <TeX className="math" math={"m_calculated \\: = \\:" + round(this.state.slope) + "\\: = \\frac{ \\color{#4682b4}" + round(evaluate(this.state.fn,{x:this.state.x+h})) + "\\: color{#000} - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x})) + "}{" + this.state.h  + "} \\: ~ \\: m_true \\: = \\: " + this.state.trueSlope} block/>
 
   render() {
     let mathString = String("m_{calculated} \\: = \\:" + round(this.state.slope) + "\\: = \\frac{\\color{#4682b4}" + round(evaluate(this.state.fn,{x:(this.state.x+this.state.h)})) + "\\color{#000} - \\: \\color{#b47846}" + round(evaluate(this.state.fn,{x:this.state.x})) + "\\color{#000}}{\\color{#bd3c4b}" + this.state.h  + "} \\: ~ \\: m_{true} \\: = \\: " + round(this.state.trueSlope));
